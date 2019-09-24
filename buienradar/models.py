@@ -87,3 +87,14 @@ class ActualWeather:
     sunset: str
     sunrise: str
     stationmeasurements: List[StationMeasurement]
+
+
+@dataclass
+class RainData:
+    rain: int
+    time: str
+
+    @property
+    def rain_intensity(self):
+        """ millimeter per hour """
+        return 10**((self.rain-109)/32)

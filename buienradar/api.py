@@ -5,11 +5,12 @@ import aiohttp
 import requests
 
 from .models import (ActualWeather, Forecast, ForecastDay, ForecastMessage,
-                     WeatherReport)
+                     RainData, WeatherReport)
 
 
 class BuienradarBase():
     base_url = 'https://data.buienradar.nl/2.0/feed/json'
+    gps_url = 'https://gpsgadget.buienradar.nl/data/raintext'
 
     @staticmethod
     def _convert(payload: Union[List, Dict], model: type):
@@ -20,6 +21,11 @@ class BuienradarBase():
                 items.append(item)
             return items
         return model.from_dict(payload)
+
+    @staticmethod
+    def _convert_rain_data(payload: str) -> List[RainData]:
+        lines = payload.splitlines()
+        return [RainData(int(line.split('|')[0]), line.split('|')[1]) for line in lines]
 
 
 class BuienradarApi(BuienradarBase):
@@ -36,6 +42,10 @@ class BuienradarApi(BuienradarBase):
     def _request(self, url: str, params: dict = None) -> object:
         with self.session.get(url, headers=self.headers, params=params) as request:
             request.raise_for_status()
+
+            if request.headers['Content-Type'] == 'text/plain':
+                return request.text
+
             return request.json()
 
     def get_shortterm_forecast(self) -> ForecastMessage:
@@ -62,6 +72,11 @@ class BuienradarApi(BuienradarBase):
         """ Get actual weather measurements """
         response = self._request(self.base_url)
         return self._convert(response['actual'], model = ActualWeather)
+
+    def get_rain(self, latitude: int, longitude: int) -> List[RainData]:
+        """ Get the expected rainfall for the next 2 hours per 5 minutes """
+        response = self._request(self.gps_url, { 'lat': latitude, 'lon': longitude })
+        return self._convert_rain_data(response)
 
 
 class AsyncBuienradarApi(BuienradarBase):
@@ -111,3 +126,8 @@ class AsyncBuienradarApi(BuienradarBase):
         """ Get actual weather measurements """
         response = await self._request(self.base_url)
         return self._convert(response['actual'], model = ActualWeather)
+
+    async def get_rain(self, latitude: int, longitude: int) -> List[RainData]:
+        """ Get the expected rainfall for the next 2 hours per 5 minutes """
+        response = await self._request(self.gps_url, { 'lat': latitude, 'lon': longitude })
+        return self._convert_rain_data(response)
