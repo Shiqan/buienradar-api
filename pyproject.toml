@@ -1,0 +1,22 @@
+[tool.poetry]
+name = "buienradar-api"
+version = "0.0.1"
+description = "Python 3 wrapper for buienradar API"
+authors = ["Shiqan"]
+license = "MIT"
+readme = "README.md"
+homepage = "https://github.com/Shiqan/buienradar-api"
+repository = "https://github.com/Shiqan/buienradar-api"
+keywords = ["buienradar", "api"]
+
+[tool.poetry.dependencies]
+python = "^3.7"
+requests = "*"
+dataclasses-json = "*"
+aiohttp = "*"
+
+[tool.poetry.dev-dependencies]
+pylint = "*"
+autopep8 = "*"
+rope = "*"
+pytest = "*"
